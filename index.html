@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Engineering Operating Model | PEOM</title>
+  <meta name="description" content="Prompt Engineering Operating Model: from workflow friction to evaluated, governed, deployable AI systems." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #030504;
+      --black-2: #07100b;
+      --black-3: #0c1710;
+      --black-4: #111f17;
+      --lime: #b8ff2c;
+      --lime-2: #84cc16;
+      --lime-3: #d9ff8a;
+      --green: #22c55e;
+      --cyan: #67e8f9;
+      --red: #fb7185;
+      --white: #f8fafc;
+      --muted: rgba(248, 250, 252, 0.68);
+      --dim: rgba(248, 250, 252, 0.38);
+      --line: rgba(255, 255, 255, 0.11);
+      --line-lime: rgba(184, 255, 44, 0.34);
+      --glow: rgba(184, 255, 44, 0.24);
+      --shadow: 0 34px 110px rgba(0, 0, 0, 0.52);
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Bebas Neue', sans-serif;
+      --sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--sans);
+      background:
+        linear-gradient(145deg, #030504 0%, #07100b 42%, #10210f 76%, #1f3a13 100%);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(184, 255, 44, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 255, 44, 0.055) 1px, transparent 1px);
+      background-size: 56px 56px;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent 88%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.018) 2px, rgba(255,255,255,0.018) 4px);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    a { color: inherit; }
+    .shell { position: relative; z-index: 2; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(3, 5, 4, 0.86);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 13px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 4px;
+      background: var(--lime);
+      color: var(--black);
+      font-family: var(--mono);
+      font-weight: 900;
+      letter-spacing: 0;
+      box-shadow: 0 0 30px var(--glow);
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+
+    .brand-copy span {
+      display: block;
+      margin-top: 2px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.07em;
+      color: var(--dim);
+    }
+
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .top-links a {
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      padding: 9px 11px;
+      border-radius: 4px;
+      transition: 0.18s ease;
+    }
+
+    .top-links a:hover {
+      color: var(--lime);
+      border-color: var(--line-lime);
+      background: rgba(184,255,44,0.08);
+    }
+
+    .live-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--green);
+    }
+
+    .live-dot::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(34,197,94,0.7);
+      animation: pulse 1.8s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.72); }
+    }
+
+    .hero {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 76px 24px 46px;
+      display: grid;
+      grid-template-columns: 1fr 0.86fr;
+      gap: 44px;
+      align-items: center;
+    }
+
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--lime);
+    }
+
+    .kicker::before {
+      content: "";
+      width: 34px;
+      height: 2px;
+      background: var(--lime);
+      box-shadow: 0 0 14px var(--glow);
+    }
+
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(66px, 10vw, 136px);
+      line-height: 0.84;
+      letter-spacing: 0.012em;
+      text-transform: uppercase;
+      max-width: 790px;
+    }
+
+    h1 span {
+      color: var(--lime);
+      text-shadow: 0 0 36px rgba(184,255,44,0.25);
+    }
+
+    .hero-sub {
+      margin-top: 24px;
+      max-width: 715px;
+      font-size: 17px;
+      line-height: 1.72;
+      color: var(--muted);
+    }
+
+    .hero-sub strong { color: var(--white); }
+
+    .tag-row {
+      margin-top: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .tag {
+      border: 1px solid var(--line-lime);
+      background: rgba(184,255,44,0.08);
+      color: var(--lime-3);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border-radius: 3px;
+    }
+
+    .tag.dark {
+      border-color: var(--line);
+      color: var(--dim);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .tag.green {
+      border-color: rgba(34,197,94,0.34);
+      color: #86efac;
+      background: rgba(34,197,94,0.08);
+    }
+
+    .hero-actions {
+      margin-top: 34px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: 0.2s ease;
+    }
+
+    .btn.primary {
+      background: var(--lime);
+      color: var(--black);
+      box-shadow: 0 0 30px rgba(184,255,44,0.24);
+    }
+
+    .btn.ghost {
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.07);
+    }
+
+    .readiness-panel {
+      background: linear-gradient(180deg, rgba(17,31,23,0.96), rgba(3,5,4,0.98));
+      border: 1px solid var(--line-lime);
+      border-radius: 14px;
+      box-shadow: var(--shadow), 0 0 70px rgba(184,255,44,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .panel-header strong { color: var(--lime); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .metric {
+      background: var(--black-3);
+      padding: 24px 20px;
+      min-height: 135px;
+    }
+
+    .metric.big {
+      grid-column: span 2;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-end;
+      min-height: 190px;
+    }
+
+    .metric-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .metric-value {
+      margin-top: 10px;
+      font-family: var(--display);
+      font-size: 78px;
+      line-height: 0.86;
+      color: var(--lime);
+      text-shadow: 0 0 28px rgba(184,255,44,0.2);
+    }
+
+    .metric:not(.big) .metric-value { font-size: 58px; }
+
+    .metric-copy {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      max-width: 290px;
+    }
+
+    .meter-stack {
+      width: min(230px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .meter-row span {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--lime);
+      box-shadow: 0 0 18px var(--glow);
+      transform-origin: left;
+      animation: meterIn 1.2s ease both;
+    }
+
+    @keyframes meterIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+    section {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 58px 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    .section-num {
+      font-family: var(--mono);
+      color: var(--lime);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-family: var(--display);
+      font-size: clamp(48px, 6vw, 86px);
+      line-height: 0.88;
+      letter-spacing: 0.012em;
+      text-transform: uppercase;
+    }
+
+    h2 span { color: var(--lime); }
+
+    .section-note {
+      max-width: 470px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .question-card {
+      background: linear-gradient(180deg, rgba(17,31,23,0.96), rgba(7,16,11,0.98));
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--lime);
+      border-radius: 10px;
+      padding: 24px;
+      min-height: 260px;
+      transition: 0.22s ease;
+    }
+
+    .question-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--line-lime);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.28);
+    }
+
+    .question-card .role {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 18px;
+    }
+
+    .question-card p {
+      font-size: 19px;
+      line-height: 1.44;
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .question-card span {
+      display: block;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.62;
+    }
+
+    .visual-panel {
+      background: rgba(3,5,4,0.54);
+      border: 1px solid var(--line-lime);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .visual-panel img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .visual-caption {
+      padding: 16px 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .intake-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .intake-card {
+      background: var(--black-3);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 14px;
+      min-height: 116px;
+    }
+
+    .intake-card strong {
+      display: block;
+      color: var(--lime);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .intake-card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.52;
+    }
+
+    .verdict-row {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .verdict {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.035);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .verdict b {
+      display: block;
+      font-family: var(--display);
+      color: var(--lime);
+      font-size: 34px;
+      line-height: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .verdict span {
+      display: block;
+      font-family: var(--mono);
+      color: var(--white);
+      font-size: 10px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .verdict p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .layer-list {
+      background: var(--black-3);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .layer-row {
+      display: grid;
+      grid-template-columns: 170px 1fr 120px;
+      gap: 18px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+
+    .layer-row:last-child { border-bottom: none; }
+
+    .layer-name {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--lime);
+    }
+
+    .layer-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .status {
+      justify-self: end;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 7px 9px;
+      border-radius: 3px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .status.pass {
+      color: #86efac;
+      background: rgba(34,197,94,0.08);
+      border-color: rgba(34,197,94,0.32);
+    }
+
+    .status.gate {
+      color: var(--lime-3);
+      background: rgba(184,255,44,0.08);
+      border-color: rgba(184,255,44,0.32);
+    }
+
+    .status.stop {
+      color: #fda4af;
+      background: rgba(251,113,133,0.08);
+      border-color: rgba(251,113,133,0.32);
+    }
+
+    .pilot-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .pilot-card {
+      background: var(--black-3);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--lime);
+      border-radius: 10px;
+      padding: 22px;
+      min-height: 230px;
+    }
+
+    .pilot-card .week {
+      font-family: var(--display);
+      font-size: 54px;
+      line-height: 0.84;
+      color: var(--lime);
+    }
+
+    .pilot-card h3 {
+      margin-top: 18px;
+      font-size: 18px;
+      line-height: 1.2;
+      color: var(--white);
+    }
+
+    .pilot-card p {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.62;
+    }
+
+    .cta {
+      background:
+        linear-gradient(135deg, rgba(184,255,44,0.14), rgba(3,5,4,0.98) 38%, rgba(5,15,8,0.98));
+      border: 1px solid var(--line-lime);
+      border-radius: 16px;
+      padding: 38px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 34px;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .cta p {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 760px;
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 250px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      background: rgba(3,5,4,0.92);
+    }
+
+    .footer-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--dim);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      line-height: 1.65;
+      text-transform: uppercase;
+    }
+
+    .footer-inner b { color: var(--lime); }
+
+    .fade { opacity: 0; transform: translateY(14px); animation: fadeUp 0.7s ease forwards; }
+    .d1 { animation-delay: 0.08s; }
+    .d2 { animation-delay: 0.16s; }
+    .d3 { animation-delay: 0.24s; }
+    .d4 { animation-delay: 0.32s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 980px) {
+      .hero, .split, .cta { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .section-note { margin-top: 14px; }
+      .question-grid, .pilot-grid { grid-template-columns: repeat(2, 1fr); }
+      .intake-grid { grid-template-columns: repeat(2, 1fr); }
+      .verdict-row { grid-template-columns: repeat(2, 1fr); }
+      .top-links .hide-sm { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-inner, .hero, section, .footer-inner { padding-left: 18px; padding-right: 18px; }
+      .topbar-inner { align-items: flex-start; }
+      .brand-copy span { display: none; }
+      .top-links { flex-wrap: wrap; justify-content: flex-end; }
+      h1 { font-size: 72px; }
+      h2 { font-size: 54px; }
+      .metric.big { display: block; }
+      .meter-stack { margin-top: 24px; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .metric.big { grid-column: span 1; }
+      .question-grid, .pilot-grid, .intake-grid, .verdict-row { grid-template-columns: 1fr; }
+      .layer-row { grid-template-columns: 1fr; gap: 10px; }
+      .status { justify-self: start; }
+      .cta { padding: 28px; }
+      .footer-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">PE</div>
+          <div class="brand-copy">
+            <strong>Prompt Engineering Operating Model</strong>
+            <span>Workflow Architecture · Evaluation · Governance</span>
+          </div>
+        </div>
+        <nav class="top-links" aria-label="Repository navigation">
+          <span class="live-dot hide-sm">Evaluation Layer Active</span>
+          <a href="https://github.com/emcdo411/prompt-engineering-operating-model#readme">README</a>
+          <a href="https://github.com/emcdo411/prompt-engineering-operating-model">Repo</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="kicker fade">AI Infrastructure · Prompt + Context Engineering · Proof Asset</p>
+          <h1 class="fade d1">Prompt Engineering Is <span>Infrastructure</span> Now.</h1>
+          <p class="hero-sub fade d2">
+            PEOM turns workflow friction into evaluated, governed, deployable AI systems.
+            It is built for the point where <strong>model behavior, business process, human review, and measurable impact</strong> have to meet.
+          </p>
+          <div class="tag-row fade d3">
+            <span class="tag">Workflow Intake</span>
+            <span class="tag">Context Design</span>
+            <span class="tag">Output Evaluation</span>
+            <span class="tag green">Human-in-the-Loop</span>
+            <span class="tag">Regression Testing</span>
+            <span class="tag dark">McDonald 2026</span>
+          </div>
+          <div class="hero-actions fade d4">
+            <a class="btn primary" href="#questions">View Executive Questions</a>
+            <a class="btn ghost" href="https://github.com/emcdo411/prompt-engineering-operating-model#readme">Open README</a>
+          </div>
+        </div>
+
+        <aside class="readiness-panel fade d2" aria-label="PEOM readiness dashboard">
+          <div class="panel-header">
+            <span>Operating Model Readiness</span>
+            <strong>Proof Layer</strong>
+          </div>
+          <div class="metric-grid">
+            <div class="metric big">
+              <div>
+                <p class="metric-label">Architectural Verdict</p>
+                <div class="metric-value">BUILD</div>
+                <p class="metric-copy">A production prompt system starts with workflow ownership, not clever instructions.</p>
+              </div>
+              <div class="meter-stack">
+                <div class="meter-row"><span>Workflow</span><div class="meter"><div class="meter-fill" style="width:92%"></div></div></div>
+                <div class="meter-row"><span>Context</span><div class="meter"><div class="meter-fill" style="width:86%"></div></div></div>
+                <div class="meter-row"><span>Evaluation</span><div class="meter"><div class="meter-fill" style="width:95%"></div></div></div>
+                <div class="meter-row"><span>Governance</span><div class="meter"><div class="meter-fill" style="width:89%"></div></div></div>
+              </div>
+            </div>
+            <div class="metric">
+              <p class="metric-label">Eval Checks</p>
+              <div class="metric-value">09</div>
+              <p class="metric-copy">Accuracy, consistency, grounding, hallucination, edge cases, task completion, acceptance, regression, impact.</p>
+            </div>
+            <div class="metric">
+              <p class="metric-label">Pilot Window</p>
+              <div class="metric-value">30</div>
+              <p class="metric-copy">Days from workflow discovery to limited pilot readout with owner, metrics, and next-build recommendation.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="questions">
+        <div class="section-head">
+          <div>
+            <p class="section-num">01 · Executive Entry Points</p>
+            <h2>Three questions that <span>change the room.</span></h2>
+          </div>
+          <p class="section-note">
+            PEOM opens with business judgment before technical architecture. If the organization cannot answer these, the discovery engagement has already begun.
+          </p>
+        </div>
+        <div class="question-grid">
+          <article class="question-card fade">
+            <div class="role">C-Suite</div>
+            <p>Which internal workflow, if improved by 30%, would create the most leverage without increasing operational risk?</p>
+            <span>This separates strategic leverage from AI theater.</span>
+          </article>
+          <article class="question-card fade d1">
+            <div class="role">AI / Engineering Leadership</div>
+            <p>Are prompts treated as product infrastructure with versioning, evaluation, and regression checks?</p>
+            <span>This exposes whether AI quality is governed or improvised.</span>
+          </article>
+          <article class="question-card fade d2">
+            <div class="role">Operations</div>
+            <p>Where are high-context employees translating messy information into decisions AI could support, but not fully own?</p>
+            <span>This finds the work that should be augmented before it is automated.</span>
+          </article>
+        </div>
+      </section>
+
+      <section id="workflow">
+        <div class="section-head">
+          <div>
+            <p class="section-num">02 · Lifecycle</p>
+            <h2>From friction to <span>deployable behavior.</span></h2>
+          </div>
+          <p class="section-note">
+            A prompt that works once is not infrastructure. A workflow that is decomposed, contextualized, evaluated, governed, monitored, and owned can become infrastructure.
+          </p>
+        </div>
+        <div class="visual-panel fade">
+          <img src="assets/peom-workflow-diagram.png" alt="Prompt Engineering Operating Model workflow diagram" />
+          <div class="visual-caption">PEOM lifecycle: workflow problem, task decomposition, prompt design, context design, tool integration, evaluation, human review, deployment, monitoring.</div>
+        </div>
+      </section>
+
+      <section id="intake">
+        <div class="section-head">
+          <div>
+            <p class="section-num">03 · Workflow Opportunity Intake</p>
+            <h2>Score the workflow before <span>building the prompt.</span></h2>
+          </div>
+          <p class="section-note">
+            Intake protects the organization from starting with the most exciting AI idea instead of the highest-leverage workflow.
+          </p>
+        </div>
+        <div class="intake-grid">
+          <div class="intake-card"><strong>Impact</strong><span>Who notices if this improves by 30%?</span></div>
+          <div class="intake-card"><strong>Friction</strong><span>Where are delay, rework, and inconsistency concentrated?</span></div>
+          <div class="intake-card"><strong>Owner</strong><span>Who has authority to approve workflow change?</span></div>
+          <div class="intake-card"><strong>Data</strong><span>Are inputs structured, accessible, and current enough?</span></div>
+          <div class="intake-card"><strong>Review</strong><span>Where does human judgment remain accountable?</span></div>
+          <div class="intake-card"><strong>Tool Access</strong><span>Can the workflow connect to real systems?</span></div>
+          <div class="intake-card"><strong>Suitability</strong><span>Is this language, reasoning, classification, retrieval, or generation?</span></div>
+          <div class="intake-card"><strong>Risk</strong><span>What happens if the AI produces a bad output?</span></div>
+          <div class="intake-card"><strong>Metric</strong><span>How will improvement be measured?</span></div>
+          <div class="intake-card"><strong>Hours</strong><span>How much manual time is being burned each week?</span></div>
+        </div>
+        <div class="verdict-row">
+          <div class="verdict"><b>40-50</b><span>Build First</span><p>High-value workflow with owner, data, and review path.</p></div>
+          <div class="verdict"><b>30-39</b><span>Build Conditional</span><p>Worth pursuing after the missing condition is resolved.</p></div>
+          <div class="verdict"><b>20-29</b><span>Prepare First</span><p>Data, ownership, or process clarity is not ready.</p></div>
+          <div class="verdict"><b>&lt;20</b><span>Do Not Build Yet</span><p>Automation would create more risk than leverage.</p></div>
+        </div>
+      </section>
+
+      <section id="evaluation">
+        <div class="section-head">
+          <div>
+            <p class="section-num">04 · Evaluation Layer</p>
+            <h2>The part that makes it <span>credible.</span></h2>
+          </div>
+          <p class="section-note">
+            Evaluation is the difference between an impressive demo and a business system that can be trusted.
+          </p>
+        </div>
+        <div class="visual-panel fade">
+          <img src="assets/evaluation-matrix.png" alt="PEOM evaluation matrix" />
+          <div class="visual-caption">Deployment rule: accuracy, grounding, and acceptance failures block deployment. Regression failures trigger full-suite retesting.</div>
+        </div>
+      </section>
+
+      <section id="governance">
+        <div class="section-head">
+          <div>
+            <p class="section-num">05 · Governance</p>
+            <h2>No owner means <span>no deployment.</span></h2>
+          </div>
+          <p class="section-note">
+            Once a prompt enters a business workflow, it becomes an operational artifact. It needs ownership, versioning, evaluation, escalation, and monitoring.
+          </p>
+        </div>
+        <div class="split">
+          <div class="readiness-panel">
+            <div class="panel-header">
+              <span>Governance Control Surface</span>
+              <strong>Required</strong>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <p class="metric-label">Owner</p>
+                <div class="metric-value">01</div>
+                <p class="metric-copy">One accountable person must own the workflow outcome.</p>
+              </div>
+              <div class="metric">
+                <p class="metric-label">Version</p>
+                <div class="metric-value">v1</div>
+                <p class="metric-copy">Prompt changes must be traceable across evaluation runs.</p>
+              </div>
+              <div class="metric">
+                <p class="metric-label">Review</p>
+                <div class="metric-value">HITL</div>
+                <p class="metric-copy">Human review is both quality control and feedback signal.</p>
+              </div>
+              <div class="metric">
+                <p class="metric-label">Runtime</p>
+                <div class="metric-value">ESC</div>
+                <p class="metric-copy">Out-of-scope or low-confidence outputs escalate.</p>
+              </div>
+            </div>
+          </div>
+          <div class="layer-list">
+            <div class="layer-row"><div class="layer-name">Prompt Artifact</div><div class="layer-copy">Each deployed workflow has a versioned prompt with defined role, task, context, and output constraints.</div><span class="status pass">Versioned</span></div>
+            <div class="layer-row"><div class="layer-name">Evaluation Log</div><div class="layer-copy">Test case, input, output, evaluator, result, timestamp, and accepted regression baseline are recorded.</div><span class="status gate">Logged</span></div>
+            <div class="layer-row"><div class="layer-name">Human Review</div><div class="layer-copy">The system defines who reviews, what approval means, and what edits become future test cases.</div><span class="status pass">Owned</span></div>
+            <div class="layer-row"><div class="layer-name">Sensitive Data</div><div class="layer-copy">Prompt logs receive the same classification as the data they contain. Context is minimized.</div><span class="status gate">Controlled</span></div>
+            <div class="layer-row"><div class="layer-name">No Owner</div><div class="layer-copy">If there is no accountable workflow owner, the AI system should not enter production.</div><span class="status stop">Stop</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pilot">
+        <div class="section-head">
+          <div>
+            <p class="section-num">06 · 30-Day Pilot</p>
+            <h2>Fast enough to learn. <span>Structured enough to trust.</span></h2>
+          </div>
+          <p class="section-note">
+            The pilot answers whether one workflow can be improved by AI in a way that is reliable, measurable, human-governed, and worth scaling.
+          </p>
+        </div>
+        <div class="pilot-grid">
+          <article class="pilot-card">
+            <div class="week">01</div>
+            <h3>Workflow Discovery</h3>
+            <p>Score 5-10 candidate workflows, select one pilot, confirm owner, define baseline metric.</p>
+          </article>
+          <article class="pilot-card">
+            <div class="week">02</div>
+            <h3>Prompt + Context Prototype</h3>
+            <p>Decompose the workflow, define AI role, design context, build initial prompt and review path.</p>
+          </article>
+          <article class="pilot-card">
+            <div class="week">03</div>
+            <h3>Evaluation + Feedback</h3>
+            <p>Run accuracy, grounding, hallucination, edge case, acceptance, and regression tests.</p>
+          </article>
+          <article class="pilot-card">
+            <div class="week">04</div>
+            <h3>Limited Pilot + Readout</h3>
+            <p>Measure impact, review escalations, capture owner feedback, recommend scale, pause, or redesign.</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="cta fade">
+          <div>
+            <p class="section-num">Repository Handoff</p>
+            <h2>Read the model. <span>Inspect the skill.</span></h2>
+            <p>
+              This page is the executive surface. The README and docs contain the operating detail: workflow intake, lifecycle, evaluation, governance, and the 30-day pilot plan.
+            </p>
+          </div>
+          <div class="cta-actions">
+            <a class="btn primary" href="https://github.com/emcdo411/prompt-engineering-operating-model#readme">Open README</a>
+            <a class="btn ghost" href="https://github.com/emcdo411/prompt-engineering-operating-model/tree/main/docs">View Docs Folder</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <div><b>Epoch Frameworks LLC</b> · Erwin M. McDonald<br>Prompt Engineering Operating Model · Workflow Architecture · Evaluation Discipline</div>
+        <div>DACR License v2.6 · McDonald 2026<br>Proof Asset · Public Model Surface · Retained Scoring Logic</div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
