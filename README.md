@@ -9,7 +9,7 @@
 
 ![Evaluation](https://img.shields.io/badge/Evaluation-Accuracy%20%7C%20Grounding%20%7C%20Regression%20%7C%20Impact-1E40AF)
 ![Prompt Lifecycle](https://img.shields.io/badge/Lifecycle-Design%20%7C%20Context%20%7C%20Tools%20%7C%20Monitoring-334155)
-![DACR](https://img.shields.io/badge/DACR-License%20v2.7-7C3AED)
+[![DACR](https://img.shields.io/badge/DACR-License%20v2.7-7C3AED)](./DACR_LICENSE.md)
 
 ---
 
@@ -338,6 +338,5 @@ The value is not producing a better model response. The value is designing the o
 ---
 
 **Prompt Engineering Operating Model v1.2**
-McDonald (2026) | DACR License v2.7 | Epoch Frameworks LLC
+McDonald (2026) | [DACR License v2.7](./DACR_LICENSE.md) | Epoch Frameworks LLC
 Proprietary methodology. Public artifact shares the operating model, not the retained scoring logic.
-
